@@ -1,6 +1,8 @@
 import re
 from typing import List
+import time
 
+cache = set()
 
 def modify_name(origin_name: str) -> list:
     res = re.split('\W+', origin_name)
@@ -20,14 +22,20 @@ def get_match(asset: List[str], material: List[str], match_level: int) -> dict:
                 continue
             longest, sub_len = max(len(a), len(m)), 0            
 
-            while sub_len < min(len(a), len(m)):
-                if a[sub_len] == m[sub_len]:                    
-                    sub_len += 1                    
-                else:
-                    break
+            if a not in cache or m not in cache:
+                while sub_len < min(len(a), len(m)):
+                    if a[sub_len] == m[sub_len]:                    
+                        sub_len += 1                    
+                    else:
+                        break
+            else:                
+                sub_len = min(len(a), len(m))
+            
+            match = a[0:sub_len]
+            cache.add(match)
             
             if sub_len/longest > match_level:                
-                matches[a[0:sub_len]] = sub_len/longest
+                matches[match] = sub_len/longest
     
     return matches
 
@@ -51,7 +59,7 @@ def heaps_comparison(assets: List[str], materials: List[str], target_match_level
             material = modify_name(material)
             actual_match_level = 0
 
-            matches = get_match(asset, material, target_match_level)
+            matches = get_match(asset, material, target_match_level)            
             if matches:
                 actual_match_level = count_level(asset, material, matches)
 
@@ -70,12 +78,14 @@ def heaps_comparison(assets: List[str], materials: List[str], target_match_level
                 )
 
 
-def main():
+def main():    
+    start = time.time()
     target_match_level = 50
     assets = ['палатка каркасная ПК -10 камуфлированной расцветки', 'палатка каркасная(ПК- 10)']
     materials = ['палатка', 'полотно', 'каркас для палатки', 'пожарный кран ПК -10']
 
     heaps_comparison(assets, materials, target_match_level)
+    print(f'\nTotal time: {time.time() - start}')
 
 
 if __name__ == '__main__':
