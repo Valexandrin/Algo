@@ -4,38 +4,48 @@ import time
 
 cache = set()
 
+
 def modify_name(origin_name: str) -> list:
     res = re.split('\W+', origin_name)
     res = [item for item in res if item]
     return res
 
 
-def get_match(asset: List[str], material: List[str], match_level: int) -> dict:
-    match_level = match_level/100
+def sub_measure(s1: str, s2: str) -> int:    
+    len1, len2 = len(s1), len(s2)
+
+    if s1 == s2 and s1 in cache:                
+        return min(len1, len2)        
+    
+    sub_len = 0
+    while sub_len < min(len1, len2):
+        if s1[sub_len] == s2[sub_len]:                    
+            sub_len += 1
+        else:
+            return sub_len
+
+    return sub_len
+
+
+def get_match(asset: List[str], material: List[str], target_match_level: int) -> dict:
+    target_match_level = target_match_level/100
     matches = {}
     for a in asset:
-        if not a or a in matches:
+        if a in matches:
             continue
 
         for m in material:
-            if not m or m in matches:
+            if m in matches:
                 continue
-            longest, sub_len = max(len(a), len(m)), 0            
-
-            if a not in cache or m not in cache:
-                while sub_len < min(len(a), len(m)):
-                    if a[sub_len] == m[sub_len]:                    
-                        sub_len += 1                    
-                    else:
-                        break
-            else:                
-                sub_len = min(len(a), len(m))
             
+            sub_len = sub_measure(a, m)            
             match = a[0:sub_len]
             cache.add(match)
-            
-            if sub_len/longest > match_level:                
-                matches[match] = sub_len/longest
+
+            match_level = sub_len / max(len(a), len(m))
+
+            if match_level > target_match_level:                
+                matches[match] = match_level
     
     return matches
 
@@ -81,7 +91,7 @@ def heaps_comparison(assets: List[str], materials: List[str], target_match_level
 def main():    
     start = time.time()
     target_match_level = 50
-    assets = ['палатка каркасная ПК -10 камуфлированной расцветки', 'палатка каркасная(ПК- 10)']
+    assets = ['палатка каркасная ПК -10 камуфлированной расцветки ', 'палатка каркасная(ПК- 10)']
     materials = ['палатка', 'полотно', 'каркас для палатки', 'пожарный кран ПК -10']
 
     heaps_comparison(assets, materials, target_match_level)
